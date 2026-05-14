@@ -1,9 +1,9 @@
 {
   "type": "module",
   "license": "Apache-2.0",
-  "name": "@sovereignbase/package-name",
+  "name": "@sovereignbase/verifiable-continuity",
   "version": "0.0.0",
-  "description": "",
+  "description": "Verifiable continuity signature scheme.",
   "keywords": [
     "typescript",
     "sovereignbase"
