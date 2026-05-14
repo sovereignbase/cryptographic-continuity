@@ -42,29 +42,64 @@
   <body>
     <section id="abstract">
       <p>
-        This is document defines the Verifiable Continuity Attestation Scheme
-        and Verification Method The attestation target is the information
-        carried in the claim field. The scheme itself does not assign semantics
-        to the claim. The attester is the asserting Actor. Depending on the
-        claim, that Actor may be the subject, holder, issuer, or some other role
-        described by the claim. Those roles belong to the claim semantics, not
-        to the attestation scheme. The attestation proves that the asserting
-        Actor made the claim, assuming continued sole control of the private
-        keys in the continuity chain. The scheme combines claim attestation with
-        Actor continuity. Actor continuity is implemented as verifiable
-        continuity of protected signing keys. Verification is based on
-        information already trusted by the verifying Actor. A verifying Actor
-        may verify another Actor if it holds a trusted key, authorized by its
-        controller, that can be used to validate the other Actor’s continuity
-        chain. The controller is the human or controlling party who can resolve
-        the Actor’s state through physical access to the relevant devices and
-        successful access through their frontend protections. If the verifying
-        Actor cannot verify the other Actor from its trusted information, it
-        must report to its controller that the other Actor could not be verified
-        or is unknown. The Actor may also query whether its network recognizes
-        the other Actor. If known and trusted Actors recognize, acknowledge, or
-        attest information about the other Actor, the verifying Actor may
-        present that information to its controller.
+        This document defines the Verifiable Continuity Attestation Scheme and
+        its verification method.
+      </p>
+
+      <p>
+        The attestation target is the information carried in the
+        <code>claim</code>
+        field. The scheme itself does not assign semantics to the claim.
+      </p>
+
+      <p>
+        The attester is the asserting Actor. Depending on the claim, that Actor
+        may be the subject, holder, issuer, or another role described by the
+        claim. Those roles belong to the claim semantics, not to the attestation
+        scheme.
+      </p>
+
+      <p>
+        The attestation proves that the asserting Actor made the claim, assuming
+        continued sole control of the private keys in the continuity chain.
+      </p>
+
+      <p>
+        The scheme combines claim attestation with Actor continuity. Actor
+        continuity is implemented as verifiable continuity of protected signing
+        keys.
+      </p>
+
+      <p>
+        Verification is based on information already trusted by the verifying
+        Actor. A verifying Actor may verify another Actor if it holds a trusted
+        key that can validate the other Actor’s continuity chain.
+      </p>
+
+      <p>
+        A trusted key is a key stored in the verifying Actor’s own state by its
+        controller for the purpose of verifying another Actor.
+      </p>
+
+      <p>
+        The controller is always a human. The controller may act under a
+        delegated task from an organization, but the controller is still the
+        human who can access a device capable of loading and operating the
+        Actor’s state.
+      </p>
+
+      <p>
+        If the verifying Actor cannot verify another Actor from its trusted
+        information, it must report to its controller that the other Actor could
+        not be verified or is unknown.
+      </p>
+
+      <p>
+        Recognition uses the same attestation mechanism. A trusted Actor may
+        issue a verifiable recognition credential about an otherwise unknown
+        Actor. The verifying Actor can verify that credential through the
+        trusted Actor’s continuity and present the recognized information to its
+        controller.
       </p>
     </section>
     <section id="sotd">
