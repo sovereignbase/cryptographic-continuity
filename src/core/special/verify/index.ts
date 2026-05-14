@@ -4,7 +4,7 @@ import {
   VERCONSignature,
   VERCONState,
   VERCONStateEntry,
-} from '../../.types/index.js'
+} from '../../../.types/index.js'
 import {
   __create,
   __read,

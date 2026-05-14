@@ -14,9 +14,7 @@ export async function __assert(
   signKey: SignKey,
   verconReplica: VerconState
 ): Promise<VerconSignature> {
-  const verificationMethods = __snapshot<VerconVerificationMethodEntry>(
-    verconReplica.verificationMethods
-  )
+  const verificationMethods =  verconReplica.verificationMethods.snapshot()
   const dataToBeSinged: VerconDataToBeSigned = {
     kind: 'vcs',
     asserts: claims,

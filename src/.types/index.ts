@@ -1,9 +1,11 @@
 import type { SignKey, VerifyKey } from '@sovereignbase/cryptosuite'
 import type {
+  CRList,
   CRListSnapshot,
   CRListState,
 } from '@sovereignbase/convergent-replicated-list'
 import type {
+  CRStruct,
   CRStructSnapshot,
   CRStructState,
 } from '@sovereignbase/convergent-replicated-struct'
@@ -19,19 +21,19 @@ export type VerconVerificationMethod = {
   since: number
 }
 
-export type VerconVerificationMethodEntry = {
+export type VerconVerificationMethodsEntry = {
   verificationMethod: VerconVerificationMethod
   proof: Base64URLString
 }
 
 export type VerconState = {
-  assertionMethod: CRStructState<VerconAssertionMethod>
-  verificationMethods: CRListState<VerconVerificationMethodEntry>
+  assertionMethod: CRStruct<VerconAssertionMethod>
+  verificationMethods: CRList<VerconVerificationMethodsEntry>
 }
 
 export type VerconSnapshot = {
   assertionMethod: CRStructSnapshot<VerconAssertionMethod>
-  verificationMethods: CRListSnapshot<VerconVerificationMethodEntry>
+  verificationMethods: CRListSnapshot<VerconVerificationMethodsEntry>
 }
 
 export type VerconDelta = Partial<VerconSnapshot>
