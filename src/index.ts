@@ -1,1 +1,1 @@
-export { VERCON } from './VERCON/class.js'
+export { Crypcon } from './Crypcon/class.js'
