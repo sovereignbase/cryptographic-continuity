@@ -1,7 +1,6 @@
 import { CRList } from '@sovereignbase/convergent-replicated-list'
 import type {
   CrypconSnapshot,
-  CrypconDelta,
   CrypconAssertion,
   CrypconDataToBeSigned,
   CrypconVerificationMethodsEntry,
@@ -20,6 +19,12 @@ export class Crypcon {
   declare public static readonly verificationMethods: CRList<CrypconVerificationMethodsEntry>
 
   public static async initialize(snapshot?: CrypconSnapshot) {
+    void Object.defineProperty(this, 'trustedKeyStore', {
+      value: new CRMap<VerifyKey>(snapshot?.trustedKeyStore),
+      enumerable: false,
+      writable: false,
+      configurable: false,
+    })
     void Object.defineProperty(this, 'assertionMethod', {
       value: new CRStruct<{
         keypairIdentifier: unknown
@@ -35,7 +40,6 @@ export class Crypcon {
       writable: false,
       configurable: false,
     })
-
     void Object.defineProperty(this, 'verificationMethods', {
       value: new CRList<CrypconVerificationMethodsEntry>(
         snapshot?.verificationMethods
@@ -50,17 +54,7 @@ export class Crypcon {
       typeof this.assertionMethod.signKey !== 'object' ||
       this.assertionMethod.signKey === undefined
     ) {
-      const { signKey, verifyKey } =
-        await Cryptographic.digitalSignature.generateKeypair()
-
-      const verificationMethodsEntry: CrypconVerificationMethodsEntry =
-        await createVerificationMethodsEntry(signKey, verifyKey)
-
-      void this.verificationMethods.append(verificationMethodsEntry)
-
-      ;((this.assertionMethod.keypairIdentifier =
-        verificationMethodsEntry.verificationMethod.keypairIdentifier),
-        (this.assertionMethod.signKey = signKey))
+      this.continue()
     }
   }
 
@@ -69,7 +63,7 @@ export class Crypcon {
    */
   public static async assert(data: unknown): Promise<CrypconAssertion> {
     const dtbs: CrypconDataToBeSigned = {
-      type: 'VerifiableContinuityAssertion',
+      type: 'CryptographicContinuityAssertion',
       asserts: data,
       assertedAt: Date.now(),
       keypairIdentifier: this.assertionMethod.keypairIdentifier,
@@ -90,29 +84,17 @@ export class Crypcon {
   }
 
   /**
-   * Continues the protection of the current signing key in to the new signing key
-   * @param currentSignKey
-   * @returns
-   */
-  async rotate(currentSignKey: SignKey) {}
-
-  /**
-   * Drops the specified amount verify keys and proofs from root.
-   * !! CLAIMS SINGED WITH THE DROPPED KEYS BECOME UNVERIFIABLE AS WELL AS VERIFIERS WITH TRUSTING AN DROPPED KEY CANT VERIFY CONTINUITY!!
-   * @param count
-   */
-  public static async erase(count: number) {}
-
-  public static async merge() {}
-  public static async snapshot() {}
-
-  /**
    * @returns the latest verifiable key you trust or false inicating continuity couldn't be cryptographically verified
    */
   public static async verify(
     assertion: CrypconAssertion,
-    trustedVerifyKey: VerifyKey
-  ): Promise<VerifyKey | false> {
+    assertingEntityIdentifier: string
+  ): Promise<boolean> {
+    if (assertion.type !== 'CryptographicContinuityAssertion') return false
+
+    const trustedVerifyKey = this.trustedKeyStore.get(assertingEntityIdentifier)
+    if (!trustedVerifyKey) return false
+
     const view = new CRList<CrypconVerificationMethodsEntry>(
       assertion.verificationMethods
     )
@@ -135,9 +117,17 @@ export class Crypcon {
       const next = view[index]
 
       if (
-        current.verificationMethod.since < assertion.assertedAt &&
-        (!next || next.verificationMethod.since > assertion.assertedAt)
+        assertion.keypairIdentifier ===
+        current.verificationMethod.keypairIdentifier
       ) {
+        if (
+          !(
+            current.verificationMethod.since < assertion.assertedAt &&
+            (!next || next.verificationMethod.since > assertion.assertedAt)
+          )
+        )
+          return false
+
         const {
           type,
           asserts,
@@ -163,7 +153,13 @@ export class Crypcon {
           Bytes.fromBase64UrlString(authorization)
         )
 
-        return authorized ? current.verificationMethod.verifyKey : false
+        if (authorized)
+          void this.trustedKeyStore.set(
+            assertingEntityIdentifier,
+            current.verificationMethod.verifyKey
+          )
+
+        return authorized
       }
 
       const protectedBytes = Bytes.fromString(
@@ -183,4 +179,29 @@ export class Crypcon {
 
     return false
   }
+
+  /**
+   * Continues the protection of the current assertionMethod in to a new assertionMethod
+   */
+  public static async continue(): Promise<void> {
+    const { signKey, verifyKey } =
+      await Cryptographic.digitalSignature.generateKeypair()
+
+    const verificationMethodsEntry: CrypconVerificationMethodsEntry =
+      await createVerificationMethodsEntry(signKey, verifyKey)
+
+    void this.verificationMethods.append(verificationMethodsEntry)
+
+    this.assertionMethod.keypairIdentifier =
+      verificationMethodsEntry.verificationMethod.keypairIdentifier
+
+    this.assertionMethod.signKey = signKey
+  }
+
+  public static async merge() {}
+  public static async acknowledge() {}
+  public static async garbageCollect() {}
+  public static async snapshot() {}
+  public static async addEventListener() {}
+  public static async removeEventListener() {}
 }
