@@ -1,12 +1,12 @@
-export type PackageNameErrorCode = 'EXAMPLE_ERROR_CODE'
+export type CrypconErrorCode = 'NOT_INITIALIZED'
 
-export class PackageNameError extends Error {
-  readonly code: PackageNameErrorCode
+export class CrypconError extends Error {
+  readonly code: CrypconErrorCode
 
-  constructor(code: PackageNameErrorCode, message?: string) {
+  constructor(code: CrypconErrorCode, message?: string) {
     const detail = message ?? code
-    super(`{@z-base/package-name} ${detail}`)
+    super(`{@sovereignbase/cryptographic-continuity} ${detail}`)
     this.code = code
-    this.name = 'PackageNameError'
+    this.name = 'CrypconError'
   }
 }
