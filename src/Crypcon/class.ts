@@ -56,7 +56,19 @@ export class Crypcon {
       typeof this.assertionMethod.signKey !== 'object' ||
       this.assertionMethod.signKey === undefined
     ) {
-      this.continue()
+      void this.continue()
+    }
+
+    const props = [
+      'trustedKeyStore',
+      'assertionMethod',
+      'verificationMethods',
+    ] as const
+
+    for (const prop of props) {
+      this[prop].addEventListener('ack', (ev) => {
+        ev as CustomEvent<unknown>
+      })
     }
   }
 
