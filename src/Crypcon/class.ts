@@ -83,6 +83,7 @@ export class Crypcon {
       this[prop].addEventListener('ack', () => {
         switch (prop) {
           case 'assertionMethod': {
+            this.frontierStore.set('struct', '')
           }
           case 'trustedKeyStore':
           case 'verificationMethods':
@@ -122,22 +123,27 @@ export class Crypcon {
   /**
    * @param assertion expected Crypcon assertion your application needs to verify
    * @param assertingEntityIdentifier the claiemed identity of the asserter known to you your application perhaps via information in the assertion `asserts` property
-   * @returns a boolean indicating wheter a trustedkey for the entity was known and it verified up to the assertion
+   * @returns a boolean indicating wheter a trustedkey for the entity was known and it verified up to the assertion if true the trustedKey store gets updated automatically if false there is a verifyKey provided if in the second index if the verification methods had one. So you can let your user decide wheter to trust or not and then on user intent store to the trusted key store
    */
   public static async verify(
     assertion: CrypconAssertion,
     assertingEntityIdentifier: string
-  ): Promise<boolean> {
+  ): Promise<[true, undefined] | [false, VerifyKey | undefined]> {
     if (!this.trustedKeyStore) throw new CrypconError('NOT_INITIALIZED')
 
-    if (assertion.type !== 'CryptographicContinuityAssertion') return false
-
-    const trustedVerifyKey = this.trustedKeyStore.get(assertingEntityIdentifier)
-    if (!trustedVerifyKey) return false
+    if (assertion.type !== 'CryptographicContinuityAssertion')
+      throw new CrypconError('WRONG_ASSERTION_TYPE')
 
     const view = new CRList<CrypconVerificationMethodsEntry>(
       assertion.verificationMethods
     )
+
+    const latestVerifyKey: VerifyKey =
+      view[view.size - 1].verificationMethod.verifyKey
+
+    const trustedVerifyKey = this.trustedKeyStore.get(assertingEntityIdentifier)
+    if (!trustedVerifyKey) return [false, latestVerifyKey]
+
     let index: number | undefined = undefined
     let trustCheckpoint = view.find(async (entry, i) => {
       const trustedKeypairIdentifier = await Cryptographic.identifier.derive(
@@ -149,7 +155,7 @@ export class Crypcon {
       )
     })
 
-    if (index === undefined) return false
+    if (index === undefined) return [false, latestVerifyKey]
 
     while (trustCheckpoint) {
       index++
@@ -166,7 +172,7 @@ export class Crypcon {
             (!next || next.verificationMethod.since > assertion.assertedAt)
           )
         )
-          return false
+          return [false, latestVerifyKey]
 
         const {
           type,
@@ -199,7 +205,7 @@ export class Crypcon {
             current.verificationMethod.verifyKey
           )
 
-        return authorized
+        return authorized ? [true, undefined] : [false, latestVerifyKey]
       }
 
       const protectedBytes = Bytes.fromString(
@@ -212,12 +218,12 @@ export class Crypcon {
         Bytes.fromBase64UrlString(next.authorization)
       )
 
-      if (!continues) return false
+      if (!continues) return [false, latestVerifyKey]
 
       trustCheckpoint = next
     }
 
-    return false
+    return [false, latestVerifyKey]
   }
 
   /**

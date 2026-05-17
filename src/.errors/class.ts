@@ -1,4 +1,4 @@
-export type CrypconErrorCode = 'NOT_INITIALIZED'
+export type CrypconErrorCode = 'NOT_INITIALIZED' | 'WRONG_ASSERTION_TYPE'
 
 export class CrypconError extends Error {
   readonly code: CrypconErrorCode
