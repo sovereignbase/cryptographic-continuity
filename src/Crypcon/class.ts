@@ -13,14 +13,28 @@ import { canonicalize } from 'json-canonicalize'
 import { Bytes } from '@sovereignbase/bytecodec'
 import { CRMap } from '@sovereignbase/convergent-replicated-map'
 import { CrypconError } from '../.errors/class.js'
+import { FrontierStore } from '@sovereignbase/frontier-store'
 
 export class Crypcon {
   declare private static readonly eventTarget: EventTarget
+  declare private static readonly frontierStore: FrontierStore
   declare public static readonly trustedKeyStore: CRMap<VerifyKey>
   declare private static readonly assertionMethod: CRStruct<CrypconAssertionMethod>
   declare public static readonly verificationMethods: CRList<CrypconVerificationMethodsEntry>
 
   public static async initialize(snapshot?: CrypconSnapshot) {
+    void Object.defineProperty(this, 'eventTarget', {
+      value: new EventTarget(),
+      enumerable: false,
+      writable: false,
+      configurable: false,
+    })
+    void Object.defineProperty(this, 'frontierStore', {
+      value: new FrontierStore(snapshot?.frontierStore),
+      enumerable: false,
+      writable: false,
+      configurable: false,
+    })
     void Object.defineProperty(this, 'trustedKeyStore', {
       value: new CRMap<VerifyKey>(snapshot?.trustedKeyStore),
       enumerable: false,
@@ -66,8 +80,13 @@ export class Crypcon {
     ] as const
 
     for (const prop of props) {
-      this[prop].addEventListener('ack', (ev) => {
-        ev as CustomEvent<unknown>
+      this[prop].addEventListener('ack', () => {
+        switch (prop) {
+          case 'assertionMethod': {
+          }
+          case 'trustedKeyStore':
+          case 'verificationMethods':
+        }
       })
     }
   }

@@ -70,6 +70,7 @@
     "@sovereignbase/convergent-replicated-map": "^1.0.3",
     "@sovereignbase/convergent-replicated-struct": "^1.2.3",
     "@sovereignbase/cryptosuite": "^2.2.2",
+    "@sovereignbase/frontier-store": "^0.0.0",
     "@sovereignbase/utils": "^1.2.2",
     "json-canonicalize": "^2.0.0",
     "jsonld": "^9.0.0"

@@ -2,6 +2,7 @@ import type { SignKey, VerifyKey } from '@sovereignbase/cryptosuite'
 import type { CRMapSnapshot } from '@sovereignbase/convergent-replicated-map'
 import type { CRListSnapshot } from '@sovereignbase/convergent-replicated-list'
 import type { CRStructSnapshot } from '@sovereignbase/convergent-replicated-struct'
+import { FrontierStoreSnapshot } from '@sovereignbase/frontier-store'
 
 export type CrypconAssertionMethod = {
   keypairIdentifier: Base64URLString
@@ -20,6 +21,7 @@ export type CrypconVerificationMethodsEntry = {
 }
 
 export type CrypconSnapshot = {
+  frontierStore: FrontierStoreSnapshot
   trustedKeyStore: CRMapSnapshot<string, VerifyKey>
   assertionMethod: CRStructSnapshot<CrypconAssertionMethod>
   verificationMethods: CRListSnapshot<CrypconVerificationMethodsEntry>
