@@ -308,7 +308,7 @@ export class Crypcon {
     this.assertionMethod.signKey = signKey
   }
 
-  public static async merge(snapshot?: CrypconSnapshot) {}
+  public static async merge(snapshot?: CrypconSnapshot): Promise<void> {}
 
   /**
    * Registers an event listener.
