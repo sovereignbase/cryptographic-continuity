@@ -90,14 +90,21 @@ export class Crypcon {
       void this.continue()
     }
 
-    const props = [
+    const crdtProps = [
       'trustedKeyStore',
       'assertionMethod',
       'verificationMethods',
     ] as const
 
-    for (const prop of props) {
-      void this[prop].addEventListener('ack', (event: unknown) => {
+    for (const prop of crdtProps) {
+      void this[prop].addEventListener('change', async () => {
+        void this[prop].acknowledge()
+        void this.eventTarget.dispatchEvent(
+          new CustomEvent('snapshot', { detail: this.toJSON() })
+        )
+      })
+
+      void this[prop].addEventListener('ack', async (event: unknown) => {
         switch (prop) {
           case 'assertionMethod': {
             const kind = 'struct'
@@ -113,6 +120,7 @@ export class Crypcon {
             void this.assertionMethod.garbageCollect(
               this.frontierStore.get(kind, targetId)
             )
+            break
           }
           case 'trustedKeyStore': {
             const kind = 'map'
@@ -123,6 +131,7 @@ export class Crypcon {
             void this.trustedKeyStore.garbageCollect(
               this.frontierStore.get(kind, targetId)
             )
+            break
           }
           case 'verificationMethods': {
             const kind = 'list'
@@ -137,6 +146,7 @@ export class Crypcon {
             void this.verificationMethods.garbageCollect(
               this.frontierStore.get(kind, targetId)
             )
+            break
           }
         }
       })
