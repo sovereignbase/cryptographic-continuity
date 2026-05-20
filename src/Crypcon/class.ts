@@ -308,7 +308,19 @@ export class Crypcon {
     this.assertionMethod.signKey = signKey
   }
 
-  public static async merge(snapshot?: CrypconSnapshot): Promise<void> {}
+  public static async merge(snapshot: CrypconSnapshot): Promise<void> {
+    if (snapshot.id === this.id) return
+    for (const [key, value] of Object.entries(snapshot)) {
+      if (key === 'id') continue
+      this[
+        key as
+          | 'frontierStore'
+          | 'trustedKeyStore'
+          | 'assertionMethod'
+          | 'verificationMethods'
+      ].merge(snapshot[key])
+    }
+  }
 
   /**
    * Registers an event listener.
