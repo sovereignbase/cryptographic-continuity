@@ -1,21 +1,32 @@
-import { CRList } from '@sovereignbase/convergent-replicated-list'
+import { CRList, CRListAck } from '@sovereignbase/convergent-replicated-list'
 import type {
   CrypconSnapshot,
   CrypconAssertion,
   CrypconDataToBeSigned,
   CrypconVerificationMethodsEntry,
   CrypconAssertionMethod,
+  CrypconEventMap,
+  CrypconEventListenerFor,
 } from '../.types/type.js'
-import { Cryptographic, type VerifyKey } from '@sovereignbase/cryptosuite'
-import { CRStruct } from '@sovereignbase/convergent-replicated-struct'
+import {
+  Cryptographic,
+  type OpaqueIdentifier,
+  type SignKey,
+  type VerifyKey,
+} from '@sovereignbase/cryptosuite'
+import {
+  CRStruct,
+  CRStructAck,
+} from '@sovereignbase/convergent-replicated-struct'
 import { createVerificationMethodsEntry } from '../.helpers/index.js'
 import { canonicalize } from 'json-canonicalize'
 import { Bytes } from '@sovereignbase/bytecodec'
-import { CRMap } from '@sovereignbase/convergent-replicated-map'
+import { CRMap, type CRMapAck } from '@sovereignbase/convergent-replicated-map'
 import { CrypconError } from '../.errors/class.js'
 import { FrontierStore } from '@sovereignbase/frontier-store'
 
 export class Crypcon {
+  declare private static readonly id: OpaqueIdentifier
   declare private static readonly eventTarget: EventTarget
   declare private static readonly frontierStore: FrontierStore
   declare public static readonly trustedKeyStore: CRMap<VerifyKey>
@@ -23,6 +34,12 @@ export class Crypcon {
   declare public static readonly verificationMethods: CRList<CrypconVerificationMethodsEntry>
 
   public static async initialize(snapshot?: CrypconSnapshot) {
+    void Object.defineProperty(this, 'id', {
+      value: snapshot?.id ?? Cryptographic.identifier.generate(),
+      enumerable: false,
+      writable: false,
+      configurable: false,
+    })
     void Object.defineProperty(this, 'eventTarget', {
       value: new EventTarget(),
       enumerable: false,
@@ -80,13 +97,47 @@ export class Crypcon {
     ] as const
 
     for (const prop of props) {
-      this[prop].addEventListener('ack', () => {
+      void this[prop].addEventListener('ack', (event: unknown) => {
         switch (prop) {
           case 'assertionMethod': {
-            this.frontierStore.set('struct', '')
+            const kind = 'struct'
+            const targetId = 'crypcon.assertionMethod'
+            const { detail } = event as CustomEvent<
+              CRStructAck<{
+                keypairIdentifier: OpaqueIdentifier
+                signKey: SignKey
+              }>
+            >
+            void this.frontierStore.set(kind, targetId, this.id, detail)
+
+            void this.assertionMethod.garbageCollect(
+              this.frontierStore.get(kind, targetId)
+            )
           }
-          case 'trustedKeyStore':
-          case 'verificationMethods':
+          case 'trustedKeyStore': {
+            const kind = 'map'
+            const targetId = 'crypcon.trustedKeyStore'
+            const { detail } = event as CustomEvent<CRMapAck>
+
+            void this.frontierStore.set(kind, targetId, this.id, detail)
+            void this.trustedKeyStore.garbageCollect(
+              this.frontierStore.get(kind, targetId)
+            )
+          }
+          case 'verificationMethods': {
+            const kind = 'list'
+            const targetId = 'crypcon.verificationMethods'
+            const { detail } = event as CustomEvent<CRListAck>
+            void this.frontierStore.set(
+              'list',
+              'crypcon.verificationMethods',
+              this.id,
+              detail
+            )
+            void this.verificationMethods.garbageCollect(
+              this.frontierStore.get(kind, targetId)
+            )
+          }
         }
       })
     }
@@ -247,10 +298,7 @@ export class Crypcon {
     this.assertionMethod.signKey = signKey
   }
 
-  public static merge() {}
-  public static acknowledge() {}
-  public static garbageCollect() {}
-  public static snapshot() {}
+  public static async merge(snapshot?: CrypconSnapshot) {}
 
   /**
    * Registers an event listener.
@@ -259,9 +307,9 @@ export class Crypcon {
    * @param listener - The listener to register.
    * @param options - Listener registration options.
    */
-  addEventListener<K extends keyof CRListEventMap<T>>(
+  public static addEventListener<K extends keyof CrypconEventMap>(
     type: K,
-    listener: CRListEventListenerFor<T, K> | null,
+    listener: CrypconEventListenerFor<K> | null,
     options?: boolean | AddEventListenerOptions
   ): void {
     void this.eventTarget.addEventListener(
@@ -278,9 +326,9 @@ export class Crypcon {
    * @param listener - The listener to remove.
    * @param options - Listener removal options.
    */
-  removeEventListener<K extends keyof CRListEventMap<T>>(
+  public static removeEventListener<K extends keyof CrypconEventMap>(
     type: K,
-    listener: CRListEventListenerFor<T, K> | null,
+    listener: CrypconEventListenerFor<K> | null,
     options?: boolean | EventListenerOptions
   ): void {
     void this.eventTarget.removeEventListener(
@@ -300,6 +348,8 @@ export class Crypcon {
    */
   public static toJSON(): CrypconSnapshot {
     return {
+      id: this.id,
+      frontierStore: this.frontierStore.snapshot(),
       trustedKeyStore: this.trustedKeyStore.toJSON(),
       assertionMethod: this.assertionMethod.toJSON(),
       verificationMethods: this.verificationMethods.toJSON(),

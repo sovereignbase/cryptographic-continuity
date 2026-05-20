@@ -1,9 +1,14 @@
-import type { SignKey, VerifyKey } from '@sovereignbase/cryptosuite'
+import type {
+  OpaqueIdentifier,
+  SignKey,
+  VerifyKey,
+} from '@sovereignbase/cryptosuite'
 import type { CRMapSnapshot } from '@sovereignbase/convergent-replicated-map'
 import type { CRListSnapshot } from '@sovereignbase/convergent-replicated-list'
 import type { CRStructSnapshot } from '@sovereignbase/convergent-replicated-struct'
 import { FrontierStoreSnapshot } from '@sovereignbase/frontier-store'
 
+// !!SENSITIVE!!
 export type CrypconAssertionMethod = {
   keypairIdentifier: Base64URLString
   signKey: SignKey
@@ -20,7 +25,9 @@ export type CrypconVerificationMethodsEntry = {
   authorization: Base64URLString
 }
 
+/** !!SENSITIVE!! */
 export type CrypconSnapshot = {
+  id: OpaqueIdentifier
   frontierStore: FrontierStoreSnapshot
   trustedKeyStore: CRMapSnapshot<string, VerifyKey>
   assertionMethod: CRStructSnapshot<CrypconAssertionMethod>
@@ -40,3 +47,25 @@ export type CrypconDataToBeSigned = {
 export type CrypconAssertion = CrypconDataToBeSigned & {
   authorization: Base64URLString
 }
+
+/**
+ * Maps Crypcon event names to their event payload shapes.
+ */
+export type CrypconEventMap = {
+  snapshot: CrypconSnapshot
+}
+
+/**
+ * Represents a strongly typed Crypcon event listener.
+ */
+export type CrypconEventListener<K extends keyof CrypconEventMap> =
+  | ((event: CustomEvent<CrypconEventMap[K]>) => void)
+  | { handleEvent(event: CustomEvent<CrypconEventMap[K]>): void }
+
+/**
+ * Resolves an event name to its corresponding listener type.
+ */
+export type CrypconEventListenerFor<K extends string> =
+  K extends keyof CrypconEventMap
+    ? CrypconEventListener<K>
+    : EventListenerOrEventListenerObject

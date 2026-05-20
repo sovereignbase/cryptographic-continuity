@@ -77,10 +77,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sovereignbase/package-name.git"
+    "url": "git+https://github.com/sovereignbase/cryptographic-continuity.git"
   },
   "bugs": {
-    "url": "https://github.com/sovereignbase/package-name/issues"
+    "url": "https://github.com/sovereignbase/cryptographic-continuity/issues"
   },
-  "homepage": "https://github.com/sovereignbase/package-name#readme"
+  "homepage": "https://github.com/sovereignbase/cryptographic-continuity#readme"
 }
